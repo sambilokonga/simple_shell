@@ -1,74 +1,144 @@
-#include "shell.h"
+#include "main.h"
 
 /**
- * interactive - returns true if shell is interactive mode
- * @info: struct address
+ * strcat_cd - function that concatenates the message for cd error
  *
- * Return: 1 if interactive mode, 0 otherwise
+ * @datash: data relevant (directory)
+ * @msg: message to print
+ * @error: output message
+ * @ver_str: counter lines
+ * Return: error message
  */
-int interactive(info_t *info)
+char *strcat_cd(data_shell *datash, char *msg, char *error, char *ver_str)
 {
-	return (isatty(STDIN_FILENO) && info->readfd <= 2);
+        char *illegal_flag;
+
+        _strcpy(error, datash->av[0]);
+        _strcat(error, ": ");
+        _strcat(error, ver_str);
+        _strcat(error, ": ");
+        _strcat(error, datash->args[0]);
+        _strcat(error, msg);
+        if (datash->args[1][0] == '-')
+        {
+                illegal_flag = malloc(3);
+                illegal_flag[0] = '-';
+                illegal_flag[1] = datash->args[1][1];
+                illegal_flag[2] = '\0';
+                _strcat(error, illegal_flag);
+                free(illegal_flag);
+ }
+        else
+        {
+                _strcat(error, datash->args[1]);
+        }
+
+        _strcat(error, "\n");
+        _strcat(error, "\0");
+        return (error);
 }
 
 /**
- * is_delim - checks if character is a delimeter
- * @c: the char to check
- * @delim: the delimeter string
- * Return: 1 if true, 0 if false
+ * error_get_cd - error message for cd command in get_cd
+ * @datash: data relevant (directory)
+ * Return: Error message
  */
-int is_delim(char c, char *delim)
+char *error_get_cd(data_shell *datash)
 {
-	while (*delim)
-		if (*delim++ == c)
-			return (1);
-	return (0);
+        int length, len_id;
+        char *error, *ver_str, *msg;
+
+        ver_str = aux_itoa(datash->counter);
+        if (datash->args[1][0] == '-')
+        {
+                msg = ": Illegal option ";
+                len_id = 2;
+        }
+        else
+ {
+                msg = ": can't cd to ";
+                len_id = _strlen(datash->args[1]);
+        }
+
+        length = _strlen(datash->av[0]) + _strlen(datash->args[0]);
+        length += _strlen(ver_str) + _strlen(msg) + len_id + 5;
+        error = malloc(sizeof(char) * (length + 1));
+
+        if (error == 0)
+        {
+                free(ver_str);
+                return (NULL);
+        }
+
+        error = strcat_cd(datash, msg, error, ver_str);
+
+        free(ver_str);
+
+        return (error);
 }
 
 /**
- *_isalpha - checks for alphabetic character
- *@c: The character to input
- *Return: 1 if c is alphabetic, 0 otherwise
+ * error_not_found - generic error message for command not found
+ * @datash: data relevant (counter, arguments)
+ * Return: Error message
  */
-
-int _isalpha(int c)
+char *error_not_found(data_shell *datash)
 {
-	if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))
-		return (1);
-	else
-		return (0);
+        int length;
+        char *error;
+        char *ver_str;
+
+        ver_str = aux_itoa(datash->counter);
+        length = _strlen(datash->av[0]) + _strlen(ver_str);
+        length += _strlen(datash->args[0]) + 16;
+        error = malloc(sizeof(char) * (length + 1));
+        if (error == 0)
+        {
+                free(error);
+                free(ver_str);
+                return (NULL);
+        }
+        _strcpy(error, datash->av[0]);
+        _strcat(error, ": ");
+        _strcat(error, ver_str);
+        _strcat(error, ": ");
+        _strcat(error, datash->args[0]);
+        _strcat(error, ": not found\n");
+        _strcat(error, "\0");
+        free(ver_str);
+        return (error);
 }
 
 /**
- *_atoi - converts a string to an integer
- *@s: the string to be converted
- *Return: 0 if no numbers in string, converted number otherwise
+ * error_exit_shell - generic error message for exit in get_exit
+ * @datash: data relevant (counter, arguments)
+ *
+ * Return: Error message
  */
-
-int _atoi(char *s)
+char *error_exit_shell(data_shell *datash)
 {
-	int i, sign = 1, flag = 0, output;
-	unsigned int result = 0;
+        int length;
+        char *error;
+        char *ver_str;
 
-	for (i = 0;  s[i] != '\0' && flag != 2; i++)
-	{
-		if (s[i] == '-')
-			sign *= -1;
+        ver_str = aux_itoa(datash->counter);
+        length = _strlen(datash->av[0]) + _strlen(ver_str);
+        length += _strlen(datash->args[0]) + _strlen(datash->args[1]) + 23;
+        error = malloc(sizeof(char) * (length + 1));
+        if (error == 0)
+        {
+                free(ver_str);
+                return (NULL);
+        }
+        _strcpy(error, datash->av[0]);
+        _strcat(error, ": ");
+        _strcat(error, ver_str);
+        _strcat(error, ": ");
+        _strcat(error, datash->args[0]);
+        _strcat(error, ": Illegal number: ");
+	 _strcat(error, datash->args[1]);
+        _strcat(error, "\n\0");
+        free(ver_str);
 
-		if (s[i] >= '0' && s[i] <= '9')
-		{
-			flag = 1;
-			result *= 10;
-			result += (s[i] - '0');
-		}
-		else if (flag == 1)
-			flag = 2;
-	}
-
-	if (sign == -1)
-		output = -result;
-	else
-		output = result;
-
-	return (output);
+        return (error);
 }
